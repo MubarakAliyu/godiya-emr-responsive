@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'motion/react';
 import { Save, User, Phone, Mail, Shield, Building } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
@@ -14,24 +14,36 @@ interface UserAccountProps {
 export function UserAccount({ onUpdate }: UserAccountProps) {
     const authState = getAuthState();
     const user = authState?.user;
+    const userProfile = useMemo(() => {
+        const names = (user?.name || '').split(' ');
+
+        return {
+            firstName: names[0] || '',
+            lastName: names.slice(1).join(' ') || '',
+            phone_number: user?.phone_number || '',
+        };
+    }, [user?.name, user?.phone_number]);
 
     const [formData, setFormData] = useState({
-        firstName: '',
-        lastName: '',
-        phone_number: '',
+        firstName: userProfile.firstName,
+        lastName: userProfile.lastName,
+        phone_number: userProfile.phone_number,
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
-        if (user) {
-            const names = (user.name || '').split(' ');
-            setFormData({
-                firstName: names[0] || '',
-                lastName: names.slice(1).join(' ') || '',
-                phone_number: user.phone_number || '',
-            });
-        }
-    }, [user]);
+        setFormData((prev) => {
+            if (
+                prev.firstName === userProfile.firstName &&
+                prev.lastName === userProfile.lastName &&
+                prev.phone_number === userProfile.phone_number
+            ) {
+                return prev;
+            }
+
+            return userProfile;
+        });
+    }, [userProfile]);
 
     const handleChange = (field: string, value: string) => {
         setFormData(prev => ({ ...prev, [field]: value }));
